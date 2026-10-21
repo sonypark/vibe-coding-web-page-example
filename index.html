@@ -1,0 +1,470 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나의 목표와 프로필</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+      background: linear-gradient(135deg, #e0e7ff, #fce7f3);
+      color: #1f2937;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 12px;
+    }
+
+    /* D-day 카운터 */
+    .dday-box {
+      background: #4f46e5;
+      color: white;
+      text-align: center;
+      padding: 24px 12px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+    }
+
+    .dday-box h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    .dday-number {
+      font-size: clamp(36px, 10vw, 52px);
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .dday-date {
+      font-size: 14px;
+      margin: 12px 0 0;
+      opacity: 0.9;
+    }
+
+    /* 프로필 카드 */
+    .profile-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 16px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .profile-icon {
+      width: 84px;
+      height: 84px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: #ede9fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+    }
+
+    .profile-card h1 {
+      font-size: 26px;
+      margin: 0 0 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-card p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #6b7280;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* 만다라트 영역 */
+    .mandalart-section {
+      background: white;
+      border-radius: 20px;
+      padding: 18px 10px;
+      box-shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
+    }
+
+    .mandalart-section h2 {
+      text-align: center;
+      font-size: 22px;
+      margin: 4px 0 8px;
+    }
+
+    .mandalart-description {
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+
+    /* 3x3 격자 */
+    .mandalart-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      width: 100%;
+    }
+
+    .goal-cell {
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #c7d2fe;
+      border-radius: 10px;
+      background: #f5f3ff;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      cursor: text;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .goal-cell:focus-within {
+      border: 2px solid #6366f1;
+      background: #eef2ff;
+    }
+
+    /* 가운데 큰 목표 */
+    .goal-cell.center {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+    }
+
+    .goal-cell.center:focus-within {
+      background: #4338ca;
+      border-color: #a5b4fc;
+    }
+
+    /* 실제 수정 가능한 글자 */
+    .goal-text {
+      width: 100%;
+      max-height: 100%;
+      overflow-y: auto;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: pre-wrap;
+      outline: none;
+      font-size: clamp(11px, 3.2vw, 15px);
+      line-height: 1.4;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .goal-cell.center .goal-text {
+      font-size: clamp(13px, 3.8vw, 18px);
+      font-weight: bold;
+    }
+
+    .goal-text:empty::before {
+      content: attr(data-placeholder);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    .goal-cell.center .goal-text:empty::before {
+      color: #c7d2fe;
+    }
+
+    /* 저장 안내와 버튼 */
+    .save-message {
+      text-align: center;
+      color: #6b7280;
+      font-size: 12px;
+      margin: 14px 0 10px;
+      min-height: 18px;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .action-button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .action-button:active {
+      transform: scale(0.97);
+    }
+
+    .action-button.reset {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    @media (max-width: 360px) {
+      .container {
+        padding: 16px 8px;
+      }
+
+      .mandalart-section {
+        padding: 14px 7px;
+      }
+
+      .mandalart-grid {
+        gap: 3px;
+      }
+
+      .goal-cell {
+        padding: 3px;
+        border-radius: 7px;
+      }
+
+      .goal-text {
+        font-size: 11px;
+      }
+
+      .goal-cell.center .goal-text {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+
+    <!-- D-day 카운터 -->
+    <section class="dday-box">
+      <h2>🎯 목표일까지</h2>
+      <p class="dday-number" id="dday">계산 중...</p>
+      <p class="dday-date">2027년 11월 18일</p>
+    </section>
+
+    <!-- 프로필 카드 -->
+    <section class="profile-card">
+      <div class="profile-icon">👋</div>
+      <h1>홍길동</h1>
+      <p>
+        안녕하세요! 새로운 도전을 즐기며
+        매일 조금씩 성장하는 사람입니다.
+      </p>
+    </section>
+
+    <!-- 만다라트 목표판 -->
+    <section class="mandalart-section">
+      <h2>🌱 나의 만다라트</h2>
+      <p class="mandalart-description">
+        각 칸을 눌러 목표와 할 일을 자유롭게 작성해 보세요.<br>
+        입력한 내용은 자동으로 저장됩니다.
+      </p>
+
+      <div class="mandalart-grid" id="mandalart">
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="왼쪽 위 할 일"
+            data-placeholder="할 일 1">꾸준히 운동하기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="위쪽 할 일"
+            data-placeholder="할 일 2">책 읽기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="오른쪽 위 할 일"
+            data-placeholder="할 일 3">새로운 것 배우기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="왼쪽 할 일"
+            data-placeholder="할 일 4">일찍 일어나기</div>
+        </div>
+
+        <div class="goal-cell center">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="가운데 큰 목표"
+            data-placeholder="나의 큰 목표">나의 큰 목표</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="오른쪽 할 일"
+            data-placeholder="할 일 5">매일 기록하기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="왼쪽 아래 할 일"
+            data-placeholder="할 일 6">건강하게 먹기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="아래쪽 할 일"
+            data-placeholder="할 일 7">시간 관리하기</div>
+        </div>
+
+        <div class="goal-cell">
+          <div class="goal-text" contenteditable="true"
+            role="textbox" aria-label="오른쪽 아래 할 일"
+            data-placeholder="할 일 8">꾸준히 실천하기</div>
+        </div>
+
+      </div>
+
+      <p class="save-message" id="saveMessage" aria-live="polite">
+        💾 수정 내용 자동 저장
+      </p>
+
+      <div class="button-row">
+        <button class="action-button" id="saveButton" type="button">
+          💾 지금 저장하기
+        </button>
+        <button class="action-button reset" id="resetButton" type="button">
+          ↩ 예시로 초기화
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // D-day 계산
+    const targetDate = new Date(2027, 10, 18);
+
+    function updateDday() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const difference = targetDate.getTime() - today.getTime();
+      const days = Math.round(
+        difference / (1000 * 60 * 60 * 24)
+      );
+
+      const element = document.getElementById("dday");
+
+      if (days > 0) {
+        element.textContent = `D-${days}`;
+      } else if (days === 0) {
+        element.textContent = "D-Day!";
+      } else {
+        element.textContent = `D+${Math.abs(days)}`;
+      }
+    }
+
+    updateDday();
+
+    // 만다라트 자동 저장
+    const STORAGE_KEY = "myMandalartGoals";
+    const cells = Array.from(
+      document.querySelectorAll(".goal-text")
+    );
+    const saveMessage = document.getElementById("saveMessage");
+
+    // 현재 입력 내용을 브라우저에 저장
+    function saveGoals() {
+      try {
+        const goals = cells.map(cell => cell.innerText);
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(goals)
+        );
+
+        saveMessage.textContent = "✅ 저장 완료!";
+      } catch (error) {
+        saveMessage.textContent =
+          "⚠️ 저장할 수 없어요. 브라우저 설정을 확인해 주세요.";
+      }
+    }
+
+    // 저장된 내용 불러오기
+    function loadGoals() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+
+        if (!saved) return;
+
+        const goals = JSON.parse(saved);
+
+        if (!Array.isArray(goals) || goals.length !== cells.length) {
+          return;
+        }
+
+        cells.forEach((cell, index) => {
+          cell.textContent = goals[index] ?? "";
+        });
+
+        saveMessage.textContent = "📂 저장된 목표를 불러왔어요.";
+      } catch (error) {
+        saveMessage.textContent = "새로운 목표를 작성해 보세요.";
+      }
+    }
+
+    // 글자를 입력할 때마다 자동 저장
+    cells.forEach(cell => {
+      cell.addEventListener("input", saveGoals);
+    });
+
+    // 수동 저장 버튼
+    document.getElementById("saveButton").addEventListener(
+      "click", saveGoals
+    );
+
+    // 예시 내용으로 초기화
+    document.getElementById("resetButton").addEventListener(
+      "click", function () {
+        const confirmed = confirm(
+          "작성한 목표를 예시 내용으로 바꿀까요?"
+        );
+
+        if (!confirmed) return;
+
+        const examples = [
+          "꾸준히 운동하기",
+          "책 읽기",
+          "새로운 것 배우기",
+          "일찍 일어나기",
+          "나의 큰 목표",
+          "매일 기록하기",
+          "건강하게 먹기",
+          "시간 관리하기",
+          "꾸준히 실천하기"
+        ];
+
+        cells.forEach((cell, index) => {
+          cell.textContent = examples[index];
+        });
+
+        saveGoals();
+      }
+    );
+
+    // 페이지를 열 때 저장된 목표 불러오기
+    loadGoals();
+  </script>
+</body>
+</html>
