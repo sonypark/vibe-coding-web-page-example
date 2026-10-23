@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>같은 그림 찾기</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #f3f5ff;
+      --ink: #202849;
+      --muted: #68718f;
+      --purple: #6757e8;
+      --card-back: #7567ef;
+    }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: max(16px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom));
+      background: radial-gradient(circle at top left, #e5e9ff, transparent 42%), var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overscroll-behavior: none;
+    }
+    .app { width: 100%; max-width: 520px; margin: 0 auto; }
+    header { text-align: center; margin: 8px 0 18px; }
+    .eyebrow {
+      display: inline-block; padding: 5px 10px; border-radius: 999px;
+      background: #e5e2ff; color: #5949ce; font-size: 12px; font-weight: 800;
+      letter-spacing: .04em;
+    }
+    h1 { margin: 10px 0 6px; font-size: clamp(25px, 7vw, 34px); letter-spacing: -.04em; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+    .stats {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px; margin-bottom: 14px;
+    }
+    .stat {
+      min-width: 0; padding: 11px 6px; text-align: center;
+      background: rgba(255,255,255,.86); border: 1px solid #e5e8f7;
+      border-radius: 15px; box-shadow: 0 5px 16px rgba(49, 58, 110, .05);
+    }
+    .stat-label { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+    .stat-value { font-size: clamp(17px, 4.5vw, 22px); font-weight: 850; font-variant-numeric: tabular-nums; }
+    .board {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(6px, 2vw, 10px); width: 100%;
+      perspective: 1000px;
+    }
+    .card {
+      border: 0; padding: 0; min-width: 0; aspect-ratio: 1 / 1;
+      background: transparent; border-radius: 13px; cursor: pointer;
+      perspective: 800px; -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .card:focus-visible { outline: 3px solid #ffb84d; outline-offset: 3px; }
+    .card-inner {
+      position: relative; display: block; width: 100%; height: 100%;
+      border-radius: inherit; transform-style: preserve-3d;
+      transition: transform .48s cubic-bezier(.2,.75,.25,1);
+    }
+    .card.flipped .card-inner, .card.matched .card-inner { transform: rotateY(180deg); }
+    .face {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      border-radius: inherit; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      user-select: none; overflow: hidden;
+    }
+    .back {
+      color: white; font-size: clamp(21px, 7vw, 34px);
+      background: linear-gradient(145deg, #887cff, #6352dc);
+      border: 2px solid rgba(255,255,255,.75);
+      box-shadow: 0 5px 10px rgba(82, 68, 188, .18);
+    }
+    .back::before {
+      content: ""; position: absolute; inset: 5px; border: 1px solid rgba(255,255,255,.3);
+      border-radius: 8px;
+    }
+    .front {
+      transform: rotateY(180deg);
+      background: #fff; border: 2px solid #e4e7fb;
+      font-size: clamp(27px, 9vw, 44px);
+      box-shadow: 0 5px 12px rgba(49, 58, 110, .07);
+    }
+    .card.matched .front {
+      background: #e8fff3; border-color: #7edbb0;
+      box-shadow: 0 0 0 2px rgba(75, 202, 145, .12);
+    }
+    .card.matched { cursor: default; }
+    .card:disabled { opacity: 1; }
+    .message {
+      min-height: 24px; text-align: center; margin: 14px 0 12px;
+      color: #5c6483; font-size: 13px; font-weight: 650;
+    }
+    .actions { display: flex; gap: 9px; }
+    .action {
+      flex: 1; border: 0; border-radius: 14px; padding: 13px 12px;
+      font-size: 15px; font-weight: 800; cursor: pointer;
+      touch-action: manipulation;
+    }
+    .primary { background: var(--purple); color: #fff; box-shadow: 0 6px 14px #6757e833; }
+    .secondary { background: #e7e9f8; color: #454d73; }
+    .footnote { text-align: center; margin: 13px 0 0; color: #8a91ab; font-size: 11px; }
+    .win {
+      position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(23, 28, 59, .52);
+    }
+    .win.hidden { display: none; }
+    .win-panel {
+      width: min(100%, 340px); padding: 28px 22px; border-radius: 24px;
+      text-align: center; background: #fff; box-shadow: 0 20px 70px #15193644;
+      animation: pop .3s ease-out;
+    }
+    .win-emoji { font-size: 54px; }
+    .win h2 { margin: 8px 0; font-size: 27px; }
+    .win p { color: var(--muted); line-height: 1.65; margin: 0 0 20px; }
+    @keyframes pop { from { transform: scale(.86); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @media (max-width: 360px) {
+      body { padding-left: 9px; padding-right: 9px; }
+      .board { gap: 5px; }
+      .card { border-radius: 10px; }
+      .stat { padding: 9px 3px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card-inner { transition-duration: .01ms; }
+      .win-panel { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <span class="eyebrow">MEMORY GAME</span>
+      <h1>🧠 같은 그림 찾기</h1>
+      <p class="subtitle">카드 두 장을 뒤집어 같은 그림을 찾아보세요!</p>
+    </header>
+
+    <section class="stats" aria-label="게임 기록">
+      <div class="stat">
+        <span class="stat-label">뒤집은 횟수</span>
+        <strong class="stat-value" id="moves">0</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">걸린 시간</span>
+        <strong class="stat-value" id="time">00:00</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">찾은 쌍</span>
+        <strong class="stat-value" id="pairs">0 / 8</strong>
+      </div>
+    </section>
+
+    <section class="board" id="board" aria-label="카드 16장"></section>
+
+    <p class="message" id="message" aria-live="polite">카드를 눌러 게임을 시작하세요 👆</p>
+
+    <div class="actions">
+      <button class="action primary" id="restart" type="button">🔄 새 게임</button>
+      <button class="action secondary" id="peek" type="button">👀 카드 보기</button>
+    </div>
+    <p class="footnote">같은 그림 8쌍 · 휴대폰 터치와 마우스 모두 지원</p>
+  </main>
+
+  <div class="win hidden" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="win-panel">
+      <div class="win-emoji">🎉</div>
+      <h2 id="winTitle">모두 찾았어요!</h2>
+      <p id="winText">멋져요!</p>
+      <button class="action primary" id="playAgain" type="button">한 번 더 하기</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const board = document.getElementById('board');
+      const movesEl = document.getElementById('moves');
+      const timeEl = document.getElementById('time');
+      const pairsEl = document.getElementById('pairs');
+      const messageEl = document.getElementById('message');
+      const winEl = document.getElementById('win');
+      const winText = document.getElementById('winText');
+
+      const pictures = ['🐱', '🐶', '🦊', '🐼', '🐸', '🦁', '🐵', '🐰'];
+      let deck = [];
+      let firstCard = null;
+      let secondCard = null;
+      let lockBoard = false;
+      let moves = 0;
+      let foundPairs = 0;
+      let started = false;
+      let finished = false;
+      let startTime = 0;
+      let timerId = null;
+      let peekTimer = null;
+      let mismatchTimer = null;
+
+      function shuffle(items) {
+        // Fisher-Yates: 카드 순서를 무작위로 섞기
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        return items;
+      }
+
+      function formatTime(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' +
+               String(secs).padStart(2, '0');
+      }
+
+      function updateTime() {
+        if (!started || finished) return;
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+        timeEl.textContent = formatTime(seconds);
+      }
+
+      function startTimer() {
+        if (started) return;
+        started = true;
+        startTime = Date.now();
+        timerId = setInterval(updateTime, 250);
+      }
+
+      function stopTimer() {
+        if (timerId !== null) clearInterval(timerId);
+        timerId = null;
+      }
+
+      function createCard(picture, index) {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card';
+        card.dataset.picture = picture;
+        card.dataset.index = String(index);
+        card.setAttribute('aria-label', '뒤집힌 카드');
+        card.setAttribute('aria-pressed', 'false');
+
+        const inner = document.createElement('span');
+        inner.className = 'card-inner';
+
+        const back = document.createElement('span');
+        back.className = 'face back';
+        back.setAttribute('aria-hidden', 'true');
+        back.textContent = '✦';
+
+        const front = document.createElement('span');
+        front.className = 'face front';
+        front.setAttribute('aria-hidden', 'true');
+        front.textContent = picture;
+
+        inner.append(back, front);
+        card.append(inner);
+        card.addEventListener('click', () => flipCard(card));
+        return card;
+      }
+
+      function setCardFace(card, isUp) {
+        card.classList.toggle('flipped', isUp);
+        card.setAttribute('aria-pressed', String(isUp));
+        card.setAttribute('aria-label', isUp ? card.dataset.picture : '뒤집힌 카드');
+      }
+
+      function flipCard(card) {
+        if (lockBoard || finished || card.classList.contains('matched') ||
+            card === firstCard || card.classList.contains('flipped')) return;
+
+        startTimer();
+        setCardFace(card, true);
+
+        if (!firstCard) {
+          firstCard = card;
+          messageEl.textContent = '첫 번째 카드를 열었어요. 짝을 찾아보세요!';
+          return;
+        }
+
+        secondCard = card;
+        moves++;
+        movesEl.textContent = String(moves);
+
+        if (firstCard.dataset.picture === secondCard.dataset.picture) {
+          firstCard.classList.add('matched');
+          secondCard.classList.add('matched');
+          firstCard.disabled = true;
+          secondCard.disabled = true;
+          foundPairs++;
+          pairsEl.textContent = `${foundPairs} / 8`;
+          messageEl.textContent = '정답! 같은 그림이에요 ✨';
+          firstCard = null;
+          secondCard = null;
+
+          if (foundPairs === pictures.length) finishGame();
+        } else {
+          lockBoard = true;
+          messageEl.textContent = '앗, 서로 다른 그림이에요. 다시 잘 기억해 보세요!';
+          mismatchTimer = setTimeout(() => {
+            setCardFace(firstCard, false);
+            setCardFace(secondCard, false);
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            mismatchTimer = null;
+            messageEl.textContent = '다음 짝을 찾아보세요 👀';
+          }, 850);
+        }
+      }
+
+      function finishGame() {
+        finished = true;
+        stopTimer();
+        updateFinalTime();
+        winText.textContent =
+          `뒤집은 횟수 ${moves}회 · 걸린 시간 ${timeEl.textContent}\n모든 짝을 찾았어요!`;
+        winEl.classList.remove('hidden');
+      }
+
+      function updateFinalTime() {
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+        timeEl.textContent = formatTime(seconds);
+      }
+
+      function newGame() {
+        stopTimer();
+        if (mismatchTimer !== null) clearTimeout(mismatchTimer);
+        if (peekTimer !== null) clearTimeout(peekTimer);
+        mismatchTimer = null;
+        peekTimer = null;
+
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+        moves = 0;
+        foundPairs = 0;
+        started = false;
+        finished = false;
+        startTime = 0;
+
+        movesEl.textContent = '0';
+        timeEl.textContent = '00:00';
+        pairsEl.textContent = '0 / 8';
+        messageEl.textContent = '카드를 눌러 게임을 시작하세요 👆';
+        winEl.classList.add('hidden');
+
+        deck = shuffle([...pictures, ...pictures]);
+        board.replaceChildren();
+        deck.forEach((picture, index) => {
+          board.appendChild(createCard(picture, index));
+        });
+      }
+
+      document.getElementById('restart').addEventListener('click', newGame);
+      document.getElementById('playAgain').addEventListener('click', newGame);
+
+      document.getElementById('peek').addEventListener('click', () => {
+        if (started || finished || lockBoard) {
+          messageEl.textContent = '카드 보기는 게임을 시작하기 전에 사용할 수 있어요.';
+          return;
+        }
+        const cards = [...board.querySelectorAll('.card')];
+        cards.forEach(card => setCardFace(card, true));
+        document.getElementById('peek').disabled = true;
+        messageEl.textContent = '카드 그림을 잠깐 확인하세요!';
+        peekTimer = setTimeout(() => {
+          cards.forEach(card => setCardFace(card, false));
+          document.getElementById('peek').disabled = false;
+          messageEl.textContent = '이제 기억력을 발휘해 보세요!';
+          peekTimer = null;
+        }, 1400);
+      });
+
+      newGame();
+    })();
+  </script>
+</body>
+</html>
