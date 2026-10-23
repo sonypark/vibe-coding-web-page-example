@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10162f">
+  <title>게임 놀이터</title>
+  <style>
+    :root {
+      --bg: #0b1024;
+      --panel: rgba(23, 31, 62, 0.82);
+      --text: #f7f8ff;
+      --muted: #aab3d6;
+      --purple: #9c8cff;
+      --cyan: #63e6e2;
+      --pink: #ff91c8;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(116, 93, 255, .25), transparent 30%),
+        radial-gradient(circle at 90% 25%, rgba(48, 211, 213, .16), transparent 28%),
+        linear-gradient(160deg, #0b1024, #151936 55%, #0b1024);
+      overflow-x: hidden;
+    }
+
+    .page {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 24px 18px 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 54px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+
+    .brand-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--purple), #6cddf0);
+      box-shadow: 0 8px 24px rgba(113, 112, 255, .25);
+      font-size: 22px;
+    }
+
+    .brand-name { font-size: 17px; }
+
+    .status {
+      color: var(--cyan);
+      border: 1px solid rgba(99,230,226,.3);
+      background: rgba(99,230,226,.08);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .hero {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 44px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before, .eyebrow::after {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: currentColor;
+      opacity: .65;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 7vw, 66px);
+      line-height: 1.12;
+      letter-spacing: -.065em;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, var(--purple), var(--cyan), var(--pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .intro {
+      max-width: 510px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: clamp(14px, 2.8vw, 17px);
+      line-height: 1.8;
+      word-break: keep-all;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 2px 18px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -.04em;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .game-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 26px;
+      background: var(--panel);
+      box-shadow: 0 18px 55px rgba(0,0,0,.16);
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(156,140,255,.55);
+      box-shadow: 0 24px 65px rgba(0,0,0,.25);
+    }
+
+    .game-art {
+      display: grid;
+      place-items: center;
+      min-height: 190px;
+      margin-bottom: 20px;
+      border-radius: 19px;
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .game-art::before, .game-art::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .space-art {
+      background: radial-gradient(circle at 50% 50%, #353e8a, #151d4a 58%, #11152f);
+    }
+
+    .space-art::before {
+      width: 210px; height: 210px;
+      border: 1px solid rgba(121, 205, 255, .23);
+      box-shadow: 0 0 0 22px rgba(121,205,255,.035), 0 0 0 44px rgba(121,205,255,.025);
+    }
+
+    .space-art::after {
+      width: 7px; height: 7px;
+      background: var(--cyan);
+      top: 28%; left: 23%;
+      box-shadow: 130px 24px #fff, 80px 110px #9c8cff, -10px 115px #ff91c8, 165px -25px #63e6e2;
+    }
+
+    .memory-art {
+      background: radial-gradient(circle at 20% 20%, #4c2e79, #24204e 55%, #161934);
+    }
+
+    .memory-art::before {
+      width: 180px; height: 180px;
+      border: 1px solid rgba(255,145,200,.25);
+      box-shadow: 0 0 0 18px rgba(255,145,200,.04);
+    }
+
+    .memory-art::after {
+      width: 8px; height: 8px;
+      background: #ff91c8;
+      top: 24%; right: 24%;
+      box-shadow: -140px 120px #63e6e2, -80px -2px #9c8cff;
+    }
+
+    .emoji {
+      font-size: clamp(64px, 10vw, 88px);
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.28));
+      animation: float 3s ease-in-out infinite;
+      user-select: none;
+    }
+
+    .memory-art .emoji { animation-delay: -.8s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 11px;
+    }
+
+    .tag {
+      color: #dcd8ff;
+      background: rgba(156,140,255,.13);
+      border: 1px solid rgba(156,140,255,.2);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .game-card h3 {
+      margin: 0 0 8px;
+      font-size: 23px;
+      letter-spacing: -.045em;
+    }
+
+    .game-card .description {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+      flex: 1;
+      word-break: keep-all;
+    }
+
+    .play-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 16px;
+      color: #11152d;
+      text-decoration: none;
+      font-weight: 850;
+      border-radius: 14px;
+      background: linear-gradient(100deg, #b6aaff, #75e8e3);
+      transition: filter .2s ease, transform .2s ease;
+    }
+
+    .play-button:hover { filter: brightness(1.07); }
+    .play-button:active { transform: scale(.985); }
+    .play-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+
+    .coming-soon {
+      margin-top: 28px;
+      padding: 19px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 20px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .coming-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      border-radius: 14px;
+      background: rgba(255,145,200,.1);
+      font-size: 22px;
+    }
+
+    .coming-soon strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .coming-soon p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,.09);
+      color: #858eaf;
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 16px 14px 32px; }
+      header { margin-bottom: 42px; }
+      .brand-icon { width: 38px; height: 38px; }
+      .status { font-size: 11px; padding: 7px 9px; }
+      .hero { margin-bottom: 34px; }
+      .section-head { align-items: start; flex-direction: column; gap: 5px; }
+      .games { grid-template-columns: 1fr; gap: 14px; }
+      .game-card { padding: 15px; border-radius: 22px; }
+      .game-art { min-height: 155px; margin-bottom: 16px; }
+      .game-card h3 { font-size: 21px; }
+      .coming-soon { align-items: flex-start; padding: 16px; }
+      footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🎮</div>
+        <div class="brand-name">게임 놀이터</div>
+      </div>
+      <div class="status">✨ 지금 2개 게임 이용 가능</div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">YOUR MINI ARCADE</div>
+      <h1>오늘은 어떤 게임을<br><span>플레이할까요?</span></h1>
+      <p class="intro">잠깐의 휴식이 필요할 때, 마음에 드는 게임을 골라보세요.<br>새로운 게임도 하나씩 추가할 예정이에요!</p>
+    </section>
+
+    <section aria-labelledby="games-title">
+      <div class="section-head">
+        <h2 id="games-title">🎯 게임 선택</h2>
+        <p>마음에 드는 게임을 눌러 시작하세요</p>
+      </div>
+
+      <div class="games">
+        <!-- 새 게임을 추가할 때는 아래 게임 카드 블록을 복사해 수정하세요. -->
+        <article class="game-card">
+          <div class="game-art space-art" aria-hidden="true">
+            <div class="emoji">🚀</div>
+          </div>
+          <div class="tags">
+            <span class="tag">액션</span>
+            <span class="tag">반사 신경</span>
+          </div>
+          <h3>운석 피하기</h3>
+          <p class="description">우주선을 좌우로 움직여 쏟아지는 운석을 피하세요. 오래 버틸수록 점수가 올라가요!</p>
+          <a class="play-button" href="meteor.html">게임 시작 <span aria-hidden="true">→</span></a>
+        </article>
+
+        <article class="game-card">
+          <div class="game-art memory-art" aria-hidden="true">
+            <div class="emoji">🧠</div>
+          </div>
+          <div class="tags">
+            <span class="tag">퍼즐</span>
+            <span class="tag">기억력</span>
+          </div>
+          <h3>같은 그림 찾기</h3>
+          <p class="description">카드를 뒤집어 같은 그림 두 장을 찾아보세요. 적은 횟수로 모든 짝을 맞춰보세요!</p>
+          <a class="play-button" href="index-memory.html">게임 시작 <span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <aside class="coming-soon">
+      <div class="coming-icon" aria-hidden="true">🕹️</div>
+      <div>
+        <strong>새로운 게임이 준비 중이에요!</strong>
+        <p>게임이 추가되면 이곳에 카드 하나를 더 만들고, 게임 파일 주소를 연결하면 돼요.</p>
+      </div>
+    </aside>
+
+    <footer>
+      <span>🎮 게임 놀이터</span>
+      <span>작은 게임, 큰 즐거움</span>
+    </footer>
+  </main>
+</body>
+</html>
