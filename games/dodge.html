@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>운석 피하기</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      background: #050816; color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overscroll-behavior: none;
+    }
+    body { position: fixed; inset: 0; }
+    canvas {
+      display: block; width: 100%; height: 100%;
+      touch-action: none; background: #050816;
+    }
+    .hud {
+      position: fixed; z-index: 2; top: max(12px, env(safe-area-inset-top));
+      left: 14px; right: 14px; display: flex; justify-content: space-between;
+      gap: 10px; pointer-events: none;
+    }
+    .pill {
+      padding: 8px 12px; border: 1px solid #35446b; border-radius: 14px;
+      background: rgba(12, 20, 48, .78); backdrop-filter: blur(6px);
+      font-size: 13px; color: #cbd5ff; min-width: 94px;
+    }
+    .pill strong { display: block; font-size: 20px; color: #fff; line-height: 1.25; }
+    .overlay {
+      position: fixed; inset: 0; z-index: 3; display: flex; align-items: center;
+      justify-content: center; padding: 24px;
+      background: rgba(3, 6, 20, .48);
+    }
+    .panel {
+      width: min(100%, 380px); padding: 26px 22px; text-align: center;
+      border-radius: 24px; border: 1px solid rgba(144, 170, 255, .4);
+      background: rgba(13, 21, 51, .94); box-shadow: 0 20px 70px #0008;
+    }
+    .emoji { font-size: 56px; margin-bottom: 6px; }
+    h1 { margin: 4px 0 10px; font-size: 28px; }
+    .desc { color: #b8c5e8; line-height: 1.65; font-size: 14px; margin: 0 0 18px; }
+    button {
+      width: 100%; border: 0; border-radius: 14px; padding: 14px 18px;
+      background: linear-gradient(135deg, #7c5cff, #32b8ff); color: white;
+      font-size: 17px; font-weight: 800; cursor: pointer;
+    }
+    button:active { transform: scale(.98); }
+    .hint {
+      position: fixed; z-index: 2; bottom: max(16px, env(safe-area-inset-bottom));
+      left: 12px; right: 12px; text-align: center; color: #a9b8df;
+      font-size: 12px; pointer-events: none; text-shadow: 0 1px 4px #000;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="우주선 운석 피하기 게임"></canvas>
+
+  <div class="hud">
+    <div class="pill">생존 시간<strong id="score">0.0초</strong></div>
+    <div class="pill" style="text-align:right">최고 기록<strong id="best">0.0초</strong></div>
+  </div>
+
+  <div class="hint" id="hint">손가락으로 끌기 · PC는 ← → 또는 A / D</div>
+
+  <div class="overlay" id="overlay">
+    <div class="panel">
+      <div class="emoji" id="panelEmoji">🚀</div>
+      <h1 id="panelTitle">운석 피하기</h1>
+      <p class="desc" id="panelDesc">우주선을 좌우로 움직여 운석을 피하세요.<br>오래 살아남을수록 점수가 올라갑니다.</p>
+      <button id="startBtn">게임 시작</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const scoreEl = document.getElementById('score');
+      const bestEl = document.getElementById('best');
+      const overlay = document.getElementById('overlay');
+      const panelEmoji = document.getElementById('panelEmoji');
+      const panelTitle = document.getElementById('panelTitle');
+      const panelDesc = document.getElementById('panelDesc');
+      const startBtn = document.getElementById('startBtn');
+      const hint = document.getElementById('hint');
+
+      let W = 0, H = 0, dpr = 1;
+      let state = 'ready';
+      let lastTime = 0, elapsed = 0, spawnTimer = 0;
+      let meteors = [], stars = [], particles = [];
+      let keys = {};
+      let pointerDown = false;
+      let best = 0;
+      try { best = Number(localStorage.getItem('meteorDodgeBest') || 0); } catch (e) {}
+      bestEl.textContent = best.toFixed(1) + '초';
+
+      const ship = { x: 0, y: 0, w: 34, h: 42, targetX: null };
+      const rand = (min, max) => Math.random() * (max - min) + min;
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ship.y = H - Math.max(90, H * 0.13);
+        ship.x = clamp(ship.x || W / 2, ship.w, W - ship.w);
+        makeStars();
+      }
+
+      function makeStars() {
+        const count = Math.floor((W * H) / 6500);
+        stars = Array.from({ length: count }, () => ({
+          x: Math.random() * W, y: Math.random() * H,
+          r: rand(0.5, 1.8), speed: rand(12, 48), alpha: rand(0.25, 0.9)
+        }));
+      }
+
+      function resetGame() {
+        elapsed = 0;
+        spawnTimer = 0;
+        meteors = [];
+        particles = [];
+        ship.x = W / 2;
+        ship.targetX = null;
+        ship.y = H - Math.max(90, H * 0.13);
+        scoreEl.textContent = '0.0초';
+      }
+
+      function startGame() {
+        resetGame();
+        state = 'playing';
+        overlay.classList.add('hidden');
+        hint.textContent = '손가락으로 끌기 · PC는 ← → 또는 A / D';
+        lastTime = performance.now();
+      }
+
+      function endGame() {
+        state = 'over';
+        const score = elapsed;
+        if (score > best) {
+          best = score;
+          try { localStorage.setItem('meteorDodgeBest', String(best)); } catch (e) {}
+          bestEl.textContent = best.toFixed(1) + '초';
+        }
+        panelEmoji.textContent = '💥';
+        panelTitle.textContent = '게임 오버!';
+        panelDesc.innerHTML = `생존 시간: <b>${score.toFixed(1)}초</b><br>다시 도전해서 기록을 세워보세요!`;
+        startBtn.textContent = '다시 시작';
+        overlay.classList.remove('hidden');
+        hint.textContent = '다시 시작 버튼을 눌러 재도전하세요';
+      }
+
+      function spawnMeteor() {
+        const radius = rand(12, 25);
+        const difficulty = Math.min(elapsed / 35, 2.5);
+        meteors.push({
+          x: rand(radius + 4, Math.max(radius + 5, W - radius - 4)),
+          y: -radius - 5, r: radius,
+          speed: rand(150, 240) + difficulty * 65,
+          drift: rand(-35, 35),
+          rot: rand(0, Math.PI * 2),
+          spin: rand(-1.5, 1.5),
+          sides: Math.floor(rand(7, 11)),
+          shape: Array.from({ length: 10 }, () => rand(0.72, 1.12))
+        });
+      }
+
+      function burst(x, y) {
+        for (let i = 0; i < 24; i++) {
+          particles.push({
+            x, y, vx: rand(-150, 150), vy: rand(-150, 150),
+            life: rand(0.25, 0.7), maxLife: 0.7, r: rand(2, 5)
+          });
+        }
+      }
+
+      function update(dt) {
+        if (state !== 'playing') {
+          stars.forEach(s => { s.y += s.speed * dt * 0.45; if (s.y > H) { s.y = 0; s.x = Math.random() * W; } });
+          return;
+        }
+
+        elapsed += dt;
+        scoreEl.textContent = elapsed.toFixed(1) + '초';
+
+        const keyboardDir = (keys.ArrowRight || keys.d || keys.D ? 1 : 0) -
+                            (keys.ArrowLeft || keys.a || keys.A ? 1 : 0);
+        if (keyboardDir !== 0) {
+          ship.x += keyboardDir * (W * 0.78) * dt;
+          ship.targetX = null;
+        } else if (ship.targetX !== null) {
+          ship.x += (ship.targetX - ship.x) * Math.min(1, dt * 15);
+        }
+        ship.x = clamp(ship.x, ship.w / 2 + 3, W - ship.w / 2 - 3);
+
+        stars.forEach(s => {
+          s.y += (s.speed + elapsed * 0.4) * dt;
+          if (s.y > H) { s.y = -2; s.x = Math.random() * W; }
+        });
+
+        const spawnInterval = Math.max(0.22, 0.82 - elapsed * 0.012);
+        spawnTimer += dt;
+        while (spawnTimer >= spawnInterval) {
+          spawnTimer -= spawnInterval;
+          spawnMeteor();
+          if (elapsed > 18 && Math.random() < Math.min(0.55, elapsed / 90)) spawnMeteor();
+        }
+
+        for (let i = meteors.length - 1; i >= 0; i--) {
+          const m = meteors[i];
+          m.y += (m.speed + elapsed * 2.4) * dt;
+          m.x += m.drift * dt;
+          m.rot += m.spin * dt;
+          if (m.x < m.r || m.x > W - m.r) m.drift *= -1;
+
+          // 우주선과 운석의 충돌 판정
+          const dx = m.x - ship.x;
+          const dy = m.y - ship.y;
+          const hitX = Math.abs(dx) < m.r * 0.78 + ship.w * 0.34;
+          const hitY = Math.abs(dy) < m.r * 0.78 + ship.h * 0.34;
+          if (hitX && hitY) {
+            burst(ship.x, ship.y);
+            endGame();
+            break;
+          }
+          if (m.y - m.r > H + 10) meteors.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          p.life -= dt;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+
+      function drawBackground() {
+        const gradient = ctx.createLinearGradient(0, 0, 0, H);
+        gradient.addColorStop(0, '#080d26');
+        gradient.addColorStop(1, '#111a3b');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, W, H);
+
+        // 은은한 성운
+        const glow = ctx.createRadialGradient(W * 0.5, H * 0.35, 0, W * 0.5, H * 0.35, Math.max(W, H) * 0.55);
+        glow.addColorStop(0, 'rgba(58, 75, 160, 0.16)');
+        glow.addColorStop(1, 'rgba(5, 8, 22, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
+
+        stars.forEach(s => {
+          ctx.globalAlpha = s.alpha;
+          ctx.fillStyle = '#dce7ff';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawShip() {
+        ctx.save();
+        ctx.translate(ship.x, ship.y);
+
+        // 엔진 불꽃
+        if (state === 'playing') {
+          const flame = 12 + Math.random() * 10;
+          ctx.fillStyle = '#ff9f43';
+          ctx.beginPath();
+          ctx.moveTo(-7, 13); ctx.lineTo(0, 13 + flame); ctx.lineTo(7, 13);
+          ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#7de7ff';
+          ctx.beginPath();
+          ctx.moveTo(-3, 13); ctx.lineTo(0, 13 + flame * 0.65); ctx.lineTo(3, 13);
+          ctx.closePath(); ctx.fill();
+        }
+
+        // 우주선 본체
+        ctx.shadowColor = '#63e5ff';
+        ctx.shadowBlur = 18;
+        const body = ctx.createLinearGradient(-17, 0, 17, 0);
+        body.addColorStop(0, '#6c83ff');
+        body.addColorStop(0.5, '#f1fbff');
+        body.addColorStop(1, '#42c8ff');
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.moveTo(0, -22);
+        ctx.lineTo(14, 11);
+        ctx.lineTo(7, 8);
+        ctx.lineTo(0, 14);
+        ctx.lineTo(-7, 8);
+        ctx.lineTo(-14, 11);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#1c3c78';
+        ctx.beginPath();
+        ctx.ellipse(0, -5, 5, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#b7f6ff';
+        ctx.beginPath();
+        ctx.ellipse(0, -7, 2.5, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawMeteor(m) {
+        ctx.save();
+        ctx.translate(m.x, m.y);
+        ctx.rotate(m.rot);
+
+        ctx.shadowColor = '#ff7043';
+        ctx.shadowBlur = 12;
+        const grad = ctx.createRadialGradient(-m.r * 0.3, -m.r * 0.35, 2, 0, 0, m.r * 1.2);
+        grad.addColorStop(0, '#ffd08a');
+        grad.addColorStop(0.4, '#d97952');
+        grad.addColorStop(1, '#653b55');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        for (let i = 0; i < m.sides; i++) {
+          const a = (i / m.sides) * Math.PI * 2;
+          const r = m.r * (m.shape[i] || 0.9);
+          const x = Math.cos(a) * r;
+          const y = Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = 'rgba(80, 40, 55, .55)';
+        ctx.beginPath(); ctx.arc(-m.r * 0.25, -m.r * 0.05, m.r * 0.22, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(m.r * 0.3, m.r * 0.28, m.r * 0.13, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        particles.forEach(p => {
+          ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+          ctx.fillStyle = '#ffb45c';
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function render() {
+        drawBackground();
+        meteors.forEach(drawMeteor);
+        if (state !== 'over') drawShip();
+        drawParticles();
+
+        if (state === 'playing') {
+          // 시간이 흐를수록 살짝 강해지는 테두리 빛
+          ctx.strokeStyle = `rgba(111, 134, 255, ${0.12 + Math.min(elapsed / 100, 0.25)})`;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(1, 1, W - 2, H - 2);
+        }
+      }
+
+      function loop(time) {
+        const dt = Math.min((time - (lastTime || time)) / 1000, 0.04);
+        lastTime = time;
+        update(dt);
+        render();
+        requestAnimationFrame(loop);
+      }
+
+      function pointerMove(e) {
+        if (!pointerDown || state !== 'playing') return;
+        const rect = canvas.getBoundingClientRect();
+        ship.targetX = e.clientX - rect.left;
+      }
+
+      canvas.addEventListener('pointerdown', e => {
+        if (state !== 'playing') return;
+        pointerDown = true;
+        ship.targetX = e.clientX;
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      canvas.addEventListener('pointermove', pointerMove);
+      canvas.addEventListener('pointerup', () => { pointerDown = false; });
+      canvas.addEventListener('pointercancel', () => { pointerDown = false; });
+
+      window.addEventListener('keydown', e => {
+        if (['ArrowLeft', 'ArrowRight', ' ', 'a', 'A', 'd', 'D'].includes(e.key)) e.preventDefault();
+        keys[e.key] = true;
+      });
+      window.addEventListener('keyup', e => { keys[e.key] = false; });
+      window.addEventListener('blur', () => { keys = {}; pointerDown = false; });
+      window.addEventListener('resize', resize);
+
+      startBtn.addEventListener('click', startGame);
+
+      resize();
+      resetGame();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
