@@ -7,288 +7,72 @@
   <title>나의 공간 | 메인</title>
   <style>
     :root {
-      --bg: #0d1228;
       --text: #f7f8ff;
       --muted: #aeb7d6;
       --line: rgba(255,255,255,.12);
     }
-
     * { box-sizing: border-box; }
-
     html { min-height: 100%; }
-
     body {
-      margin: 0;
-      min-height: 100vh;
-      overflow-x: hidden;
-      color: var(--text);
+      margin: 0; min-height: 100vh; overflow-x: hidden; color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
-      background:
-        radial-gradient(ellipse at 14% 12%, rgba(136, 112, 255, .22), transparent 35%),
-        radial-gradient(ellipse at 88% 70%, rgba(67, 222, 212, .13), transparent 32%),
-        linear-gradient(145deg, #0d1228, #171d3c 58%, #0c1228);
+      background: radial-gradient(ellipse at 14% 12%, rgba(136,112,255,.22), transparent 35%),
+                  radial-gradient(ellipse at 88% 70%, rgba(67,222,212,.13), transparent 32%),
+                  linear-gradient(145deg, #0d1228, #171d3c 58%, #0c1228);
     }
-
-    .page {
-      width: min(1040px, 100%);
-      margin: 0 auto;
-      padding: 24px 20px 30px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      font-weight: 800;
-      letter-spacing: -.04em;
-    }
-
+    .page { width: min(1040px, 100%); margin: 0 auto; padding: 24px 20px 30px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.04em; }
     .brand-mark {
-      width: 42px;
-      height: 42px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
+      width: 42px; height: 42px; display: grid; place-items: center; border-radius: 14px;
       background: linear-gradient(135deg, #a99bff, #69e4df);
-      box-shadow: 0 9px 28px rgba(117, 130, 255, .25);
-      font-size: 22px;
+      box-shadow: 0 9px 28px rgba(117,130,255,.25); font-size: 22px;
     }
-
     .brand-name { font-size: 17px; }
-
-    .header-note {
-      color: #c3c9e6;
-      font-size: 12px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.045);
-      border-radius: 999px;
-      padding: 8px 12px;
-      white-space: nowrap;
-    }
-
-    .hero {
-      padding: clamp(64px, 12vh, 112px) 0 56px;
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 18px;
-      color: #7ee9e1;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .17em;
-    }
-
-    .eyebrow::before, .eyebrow::after {
-      content: "";
-      width: 22px;
-      height: 1px;
-      background: currentColor;
-      opacity: .7;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(38px, 7.5vw, 72px);
-      line-height: 1.12;
-      letter-spacing: -.07em;
-    }
-
-    h1 span {
-      color: transparent;
-      background: linear-gradient(90deg, #b5a7ff 5%, #77e8df 54%, #ffabd8 100%);
-      background-clip: text;
-      -webkit-background-clip: text;
-    }
-
-    .hero p {
-      max-width: 560px;
-      margin: 22px auto 0;
-      color: var(--muted);
-      font-size: clamp(14px, 2.6vw, 17px);
-      line-height: 1.85;
-      word-break: keep-all;
-    }
-
-    .section-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 14px;
-      margin: 0 2px 18px;
-    }
-
-    .section-heading h2 {
-      margin: 0;
-      font-size: 21px;
-      letter-spacing: -.04em;
-    }
-
-    .section-heading p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .destinations {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
+    .header-note { color: #c3c9e6; font-size: 12px; border: 1px solid var(--line);
+      background: rgba(255,255,255,.045); border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
+    .hero { padding: clamp(64px, 12vh, 112px) 0 56px; text-align: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px;
+      color: #7ee9e1; font-size: 12px; font-weight: 800; letter-spacing: .17em; }
+    .eyebrow::before, .eyebrow::after { content: ""; width: 22px; height: 1px; background: currentColor; opacity: .7; }
+    h1 { margin: 0; font-size: clamp(38px, 7.5vw, 72px); line-height: 1.12; letter-spacing: -.07em; }
+    h1 span { color: transparent; background: linear-gradient(90deg, #b5a7ff 5%, #77e8df 54%, #ffabd8 100%); background-clip: text; -webkit-background-clip: text; }
+    .hero p { max-width: 560px; margin: 22px auto 0; color: var(--muted); font-size: clamp(14px, 2.6vw, 17px); line-height: 1.85; word-break: keep-all; }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 14px; margin: 0 2px 18px; }
+    .section-heading h2 { margin: 0; font-size: 21px; letter-spacing: -.04em; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .destinations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
     .destination {
-      --accent: #b5a7ff;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 340px;
-      overflow: hidden;
-      padding: 24px;
-      border: 1px solid var(--line);
-      border-radius: 26px;
-      color: inherit;
-      text-decoration: none;
-      background: linear-gradient(155deg, rgba(255,255,255,.085), rgba(255,255,255,.025));
+      --accent: #b5a7ff; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 340px;
+      overflow: hidden; padding: 24px; border: 1px solid var(--line); border-radius: 26px; color: inherit;
+      text-decoration: none; background: linear-gradient(155deg, rgba(255,255,255,.085), rgba(255,255,255,.025));
       box-shadow: 0 20px 55px rgba(0,0,0,.14);
       transition: transform .22s ease, border-color .22s ease, background .22s ease;
     }
-
     .destination.games { --accent: #75e8df; }
-
-    .destination::before {
-      content: "";
-      position: absolute;
-      width: 200px;
-      height: 200px;
-      top: -80px;
-      right: -75px;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: .12;
-      filter: blur(2px);
-      pointer-events: none;
-    }
-
-    .destination:hover {
-      transform: translateY(-5px);
-      border-color: color-mix(in srgb, var(--accent) 65%, transparent);
-      background: linear-gradient(155deg, rgba(255,255,255,.11), rgba(255,255,255,.035));
-    }
-
-    .destination:focus-visible {
-      outline: 3px solid var(--accent);
-      outline-offset: 4px;
-    }
-
-    .icon-box {
-      display: grid;
-      place-items: center;
-      width: 70px;
-      height: 70px;
-      margin-bottom: 25px;
-      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-      border-radius: 22px;
-      background: color-mix(in srgb, var(--accent) 13%, transparent);
-      font-size: 36px;
-    }
-
-    .kicker {
-      margin-bottom: 9px;
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 850;
-      letter-spacing: .14em;
-    }
-
-    .destination h3 {
-      margin: 0;
-      font-size: clamp(24px, 3vw, 30px);
-      letter-spacing: -.055em;
-    }
-
-    .description {
-      margin: 12px 0 26px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-      word-break: keep-all;
-    }
-
-    .go {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: auto;
-      padding-top: 17px;
-      border-top: 1px solid var(--line);
-      color: #f7f8ff;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .arrow {
-      display: grid;
-      place-items: center;
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      color: #10152c;
-      background: var(--accent);
-      font-size: 19px;
-      transition: transform .2s ease;
-    }
-
+    .destination::before { content: ""; position: absolute; width: 200px; height: 200px; top: -80px; right: -75px;
+      border-radius: 50%; background: var(--accent); opacity: .12; filter: blur(2px); pointer-events: none; }
+    .destination:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--accent) 65%, transparent);
+      background: linear-gradient(155deg, rgba(255,255,255,.11), rgba(255,255,255,.035)); }
+    .destination:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .icon-box { display: grid; place-items: center; width: 70px; height: 70px; margin-bottom: 25px;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 22px;
+      background: color-mix(in srgb, var(--accent) 13%, transparent); font-size: 36px; }
+    .kicker { margin-bottom: 9px; color: var(--accent); font-size: 11px; font-weight: 850; letter-spacing: .14em; }
+    .destination h3 { margin: 0; font-size: clamp(24px, 3vw, 30px); letter-spacing: -.055em; }
+    .description { margin: 12px 0 26px; color: var(--muted); font-size: 14px; line-height: 1.8; word-break: keep-all; }
+    .go { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto;
+      padding-top: 17px; border-top: 1px solid var(--line); color: #f7f8ff; font-size: 14px; font-weight: 800; }
+    .arrow { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%;
+      color: #10152c; background: var(--accent); font-size: 19px; transition: transform .2s ease; }
     .destination:hover .arrow { transform: translateX(3px); }
-
-    .tip {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 24px;
-      padding: 16px 18px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(255,255,255,.035);
-    }
-
-    .tip-icon {
-      flex: 0 0 auto;
-      font-size: 22px;
-    }
-
-    .tip p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.65;
-      word-break: keep-all;
-    }
-
+    .tip { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding: 16px 18px;
+      border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); }
+    .tip-icon { flex: 0 0 auto; font-size: 22px; }
+    .tip p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; word-break: keep-all; }
     .tip strong { color: #f7f8ff; }
-
-    footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 38px;
-      padding-top: 19px;
-      border-top: 1px solid rgba(255,255,255,.08);
-      color: #8790b1;
-      font-size: 12px;
-    }
-
+    footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 38px; padding-top: 19px;
+      border-top: 1px solid rgba(255,255,255,.08); color: #8790b1; font-size: 12px; }
     @media (max-width: 640px) {
       .page { padding: 16px 14px 24px; }
       .brand-mark { width: 38px; height: 38px; }
@@ -302,10 +86,7 @@
       .description { margin-bottom: 22px; }
       footer { flex-direction: column; }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation: none !important; transition: none !important; }
-    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
@@ -331,7 +112,8 @@
       </div>
 
       <div class="destinations">
-        <a class="destination mandalart" href="/mandalart/index.html">
+        <!-- 상대경로: 현재 메인 index.html이 있는 폴더 기준 -->
+        <a class="destination mandalart" href="./mandart/index.html">
           <div class="icon-box" aria-hidden="true">🎯</div>
           <div class="kicker">PLAN YOUR GOALS</div>
           <h3>만다라트 목표 계획</h3>
@@ -342,7 +124,7 @@
           </div>
         </a>
 
-        <a class="destination games" href="/game/index.html">
+        <a class="destination games" href="./games/index.html">
           <div class="icon-box" aria-hidden="true">🎮</div>
           <div class="kicker">PLAY & HAVE FUN</div>
           <h3>게임 놀이터</h3>
@@ -357,7 +139,7 @@
 
     <aside class="tip">
       <div class="tip-icon" aria-hidden="true">💡</div>
-      <p><strong>이용 안내</strong><br>이 페이지는 최상위 폴더의 <code>index.html</code>입니다. 만다라트와 게임 페이지는 각각 해당 폴더 안의 <code>index.html</code>로 연결됩니다.</p>
+      <p><strong>이용 안내</strong><br>이 파일은 <code>vibe-coding-web-page-example/</code> 폴더의 메인 <code>index.html</code>입니다. 각 카드는 같은 폴더 안의 <code>mandart/</code>와 <code>games/</code> 폴더로 상대경로 이동합니다.</p>
     </aside>
 
     <footer>
